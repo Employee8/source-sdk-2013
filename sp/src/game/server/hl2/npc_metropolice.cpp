@@ -3213,6 +3213,16 @@ void CNPC_MetroPolice::OnAnimEventStartDeployManhack( void )
 	}
 
 	pManhack->Spawn();
+	{
+		if (m_bTraitorCops)
+		{
+			pManhack->KeyValue("TraitorHack", "1");
+		}
+		else
+		{
+			pManhack->KeyValue("TraitorHack", "0");
+		}
+	}
 
 	// Make us move with his hand until we're deployed
 	pManhack->SetParent( this, handAttachment );
