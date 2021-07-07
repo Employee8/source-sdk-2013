@@ -279,6 +279,7 @@ private:
 
 	bool			m_bHeld;
 	bool			m_bHackedByAlyx;
+	bool			m_bHackedByTraitors;	// Self Explanatory
 	Vector			m_vecLoiterPosition;
 	float			m_fTimeNextLoiterPulse;
 
