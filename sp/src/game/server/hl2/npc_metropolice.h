@@ -399,6 +399,7 @@ private:
 	int				m_iPistolClips;		// How many clips the cop has in reserve
 	int				m_iManhacks;		// How many manhacks the cop has
 	bool			m_fWeaponDrawn;		// Is my weapon drawn? (ready to use)
+	bool			m_bTraitorCops;		// Define if the cop is a traitor or not
 	bool			m_bSimpleCops;		// The easy version of the cops
 	int				m_LastShootSlot;
 	CRandSimTimer	m_TimeYieldShootSlot;
