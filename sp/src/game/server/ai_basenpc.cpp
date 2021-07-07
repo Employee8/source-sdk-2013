@@ -672,28 +672,31 @@ bool CAI_BaseNPC::PassesDamageFilter( const CTakeDamageInfo &info )
 	if ( (CapabilitiesGet() & bits_CAP_FRIENDLY_DMG_IMMUNE) && info.GetAttacker() && info.GetAttacker() != this )
 	{
 		// check attackers relationship with me
-		CBaseCombatCharacter *npcEnemy = info.GetAttacker()->MyCombatCharacterPointer();
-		bool bHitByVehicle = false;
-		if ( !npcEnemy )
-		{
-			if ( info.GetAttacker()->GetServerVehicle() )
-			{
-				bHitByVehicle = true;
-			}
-		}
+		CBaseCombatCharacter* npcEnemy = info.GetAttacker()->MyCombatCharacterPointer();
 
-		if ( bHitByVehicle || (npcEnemy && npcEnemy->IRelationType( this ) == D_LI) )
+		if (npcEnemy && npcEnemy->IRelationType(this) == D_LI)
 		{
 			m_fNoDamageDecal = true;
 
-			if ( npcEnemy && npcEnemy->IsPlayer() )
+			if (npcEnemy->IsPlayer())
 			{
-				m_OnDamagedByPlayer.FireOutput( info.GetAttacker(), this );
+				m_OnDamagedByPlayer.FireOutput(info.GetAttacker(), this);
 				// This also counts as being harmed by player's squad.
-				m_OnDamagedByPlayerSquad.FireOutput( info.GetAttacker(), this );
+				m_OnDamagedByPlayerSquad.FireOutput(info.GetAttacker(), this);
 			}
 
 			return false;
+		}
+
+		if (IServerVehicle* pVehicle = info.GetAttacker()->GetServerVehicle())
+		{
+			m_fNoDamageDecal = true;
+			if (pVehicle->GetPassenger() && pVehicle->GetPassenger()->IRelationType(this) == D_LI)
+			{
+				// Players could bail from their cars to kill NPCs with this!
+				// Is there a "last passenger" variable we could use?
+				return false;
+			}
 		}
 	}
 	
