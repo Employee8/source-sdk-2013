@@ -255,6 +255,8 @@ protected:
 #endif
 
 private:
+	bool			m_bAllyCop; // The keyvalue that will turn Combine Soldiers into metrocops for the sake of my sanity
+	
 	//=========================================================
 	// Combine S schedules
 	//=========================================================
