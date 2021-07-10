@@ -583,6 +583,9 @@ void CNPC_RollerMine::Spawn( void )
 	BaseClass::Spawn();
 
 	AddEFlags( EFL_NO_DISSOLVE );
+#ifdef MAPBASE
+	AddEFlags( EFL_NO_MEGAPHYSCANNON_RAGDOLL );
+#endif
 
 	CapabilitiesClear();
 	CapabilitiesAdd( bits_CAP_MOVE_GROUND | bits_CAP_INNATE_RANGE_ATTACK1 | bits_CAP_SQUAD );
@@ -2015,6 +2018,10 @@ void CNPC_RollerMine::NotifyInteraction( CAI_BaseNPC *pUser )
 	// Force the rollermine open here. At very least, this ensures that the 
 	// correct, smaller bounding box is recomputed around it.
 	Open();
+
+#ifdef MAPBASE
+	m_OnHacked.FireOutput(pUser, this);
+#endif
 }
 
 //-----------------------------------------------------------------------------

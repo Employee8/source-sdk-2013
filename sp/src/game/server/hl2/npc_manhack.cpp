@@ -78,10 +78,14 @@
 
 #define	MANHACK_CHARGE_MIN_DIST	200
 
-ConVar	sk_manhack_health("sk_manhack_health", "0");
+#if defined(MAPBASE) && defined(HL2_EPISODIC)
+extern ConVar npc_alyx_interact_manhacks;
+#endif
+
+ConVar	sk_manhack_health( "sk_manhack_health","0");
 ConVar	sk_traitorhack_health("sk_traitorhack_health", "0");
-ConVar	sk_manhack_melee_dmg("sk_manhack_melee_dmg", "0");
-ConVar	sk_manhack_v2("sk_manhack_v2", "1");
+ConVar	sk_manhack_melee_dmg( "sk_manhack_melee_dmg","0");
+ConVar	sk_manhack_v2( "sk_manhack_v2","1");
 
 extern void		SpawnBlood(Vector vecSpot, const Vector& vAttackDir, int bloodColor, float flDamage);
 extern float	GetFloorZ(const Vector& origin);
@@ -161,10 +165,14 @@ DEFINE_FIELD(m_fTimeNextLoiterPulse, FIELD_TIME),
 
 DEFINE_FIELD(m_flBumpSuppressTime, FIELD_TIME),
 
-DEFINE_FIELD(m_bBladesActive, FIELD_BOOLEAN),
-DEFINE_FIELD(m_flBladeSpeed, FIELD_FLOAT),
-DEFINE_KEYFIELD(m_bIgnoreClipbrushes, FIELD_BOOLEAN, "ignoreclipbrushes"),
-DEFINE_FIELD(m_hSmokeTrail, FIELD_EHANDLE),
+	DEFINE_FIELD( m_bBladesActive,			FIELD_BOOLEAN),
+	DEFINE_FIELD( m_flBladeSpeed,				FIELD_FLOAT),
+	DEFINE_KEYFIELD( m_bIgnoreClipbrushes,	FIELD_BOOLEAN, "ignoreclipbrushes" ),
+	DEFINE_FIELD( m_hSmokeTrail,				FIELD_EHANDLE),
+#ifdef MAPBASE
+	DEFINE_FIELD( m_hPrevOwner,					FIELD_EHANDLE ),
+	DEFINE_KEYFIELD( m_bNoSprites,			FIELD_BOOLEAN,	"NoSprites" ),
+#endif
 
 // DEFINE_FIELD( m_pLightGlow,				FIELD_CLASSPTR ),
 // DEFINE_FIELD( m_pEyeGlow,					FIELD_CLASSPTR ),
@@ -190,9 +198,13 @@ DEFINE_FIELD(m_flBurstDuration, FIELD_FLOAT),
 DEFINE_FIELD(m_vecBurstDirection, FIELD_VECTOR),
 DEFINE_FIELD(m_bShowingHostile, FIELD_BOOLEAN),
 
-// Function Pointers
-DEFINE_INPUTFUNC(FIELD_VOID, "DisableSwarm", InputDisableSwarm),
-DEFINE_INPUTFUNC(FIELD_VOID, "Unpack", InputUnpack),
+	// Function Pointers
+	DEFINE_INPUTFUNC( FIELD_VOID,	"DisableSwarm", InputDisableSwarm ),
+	DEFINE_INPUTFUNC( FIELD_VOID,   "Unpack",		InputUnpack ),
+#ifdef MAPBASE
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnableSprites", InputEnableSprites ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "DisableSprites", InputDisableSprites ),
+#endif
 
 DEFINE_ENTITYFUNC(CrashTouch),
 
@@ -247,7 +259,6 @@ CNPC_Manhack::~CNPC_Manhack()
 //-----------------------------------------------------------------------------
 Class_T	CNPC_Manhack::Classify(void)
 {
-#ifdef EZ1
 	if (m_bHackedByTraitors)
 	{
 		return CLASS_PLAYER_ALLY; // To who wrote the comment below: No they're not
@@ -256,7 +267,6 @@ Class_T	CNPC_Manhack::Classify(void)
 	{
 		return CLASS_MANHACK; // Manhacks are always CLASS_MANHACK in EZ1
 	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1542,7 +1552,11 @@ void CNPC_Manhack::Slice(CBaseEntity* pHitEntity, float flInterval, trace_t& tr)
 	pHitEntity->TakeDamage(info);
 
 	// Spawn some extra blood where we hit
-	if (pHitEntity->BloodColor() == DONT_BLEED)
+#ifdef MAPBASE
+	if ( pHitEntity->BloodColor() == DONT_BLEED || (IRelationType(pHitEntity) > D_FR && !pHitEntity->PassesDamageFilter(info)) )
+#else
+	if ( pHitEntity->BloodColor() == DONT_BLEED )
+#endif
 	{
 		CEffectData data;
 		Vector velocity = GetCurrentVelocity();
@@ -2195,19 +2209,19 @@ void CNPC_Manhack::Precache(void)
 	//
 	// Model.
 	//
-	PrecacheModel("models/manhack.mdl");
-	PrecacheModel(MANHACK_GLOW_SPRITE);
-	PropBreakablePrecacheAll(MAKE_STRING("models/manhack.mdl"));
-
-	PrecacheScriptSound("NPC_Manhack.Die");
-	PrecacheScriptSound("NPC_Manhack.Bat");
-	PrecacheScriptSound("NPC_Manhack.Grind");
-	PrecacheScriptSound("NPC_Manhack.Slice");
-	PrecacheScriptSound("NPC_Manhack.EngineNoise");
-	PrecacheScriptSound("NPC_Manhack.Unpack");
-	PrecacheScriptSound("NPC_Manhack.ChargeAnnounce");
-	PrecacheScriptSound("NPC_Manhack.ChargeEnd");
-	PrecacheScriptSound("NPC_Manhack.Stunned");
+	PrecacheModel( DefaultOrCustomModel( "models/manhack.mdl" ) );
+	PrecacheModel( MANHACK_GLOW_SPRITE );
+	PropBreakablePrecacheAll( MAKE_STRING( DefaultOrCustomModel( "models/manhack.mdl" ) ) );
+	
+	PrecacheScriptSound( "NPC_Manhack.Die" );
+	PrecacheScriptSound( "NPC_Manhack.Bat" );
+	PrecacheScriptSound( "NPC_Manhack.Grind" );
+	PrecacheScriptSound( "NPC_Manhack.Slice" );
+	PrecacheScriptSound( "NPC_Manhack.EngineNoise" );
+	PrecacheScriptSound( "NPC_Manhack.Unpack" );
+	PrecacheScriptSound( "NPC_Manhack.ChargeAnnounce" );
+	PrecacheScriptSound( "NPC_Manhack.ChargeEnd" );
+	PrecacheScriptSound( "NPC_Manhack.Stunned" );
 
 	// Sounds used on Client:
 	PrecacheScriptSound("NPC_Manhack.EngineSound1");
@@ -2391,8 +2405,8 @@ void CNPC_Manhack::Spawn(void)
 	AddSpawnFlags(SF_NPC_FADE_CORPSE);
 #endif // _XBOX
 
-	SetModel("models/manhack.mdl");
-	SetHullType(HULL_TINY_CENTERED);
+	SetModel( DefaultOrCustomModel( "models/manhack.mdl" ) );
+	SetHullType(HULL_TINY_CENTERED); 
 	SetHullSizeNormal();
 
 	SetSolid(SOLID_BBOX);
@@ -2605,6 +2619,11 @@ EyeGlow_t* CNPC_Manhack::GetEyeGlowData(int index)
 //-----------------------------------------------------------------------------
 void CNPC_Manhack::StartEye(void)
 {
+#ifdef MAPBASE
+	if (m_bNoSprites)
+		return;
+#endif
+
 	//Create our Eye sprite
 	if (m_pEyeGlow == NULL)
 	{
@@ -2613,13 +2632,13 @@ void CNPC_Manhack::StartEye(void)
 
 		if (m_bHackedByAlyx)
 		{
-			m_pEyeGlow->SetTransparency(kRenderTransAdd, 0, 255, 0, 128, kRenderFxNoDissipation);
-			m_pEyeGlow->SetColor(0, 255, 0);
+			m_pEyeGlow->SetTransparency( kRenderTransAdd, 0, 255, 0, 128, kRenderFxNoDissipation );
+			m_pEyeGlow->SetColor( 0, 255, 0 );
 		}
 		else
 		{
-			m_pEyeGlow->SetTransparency(kRenderTransAdd, 255, 0, 0, 128, kRenderFxNoDissipation);
-			m_pEyeGlow->SetColor(255, 0, 0);
+			m_pEyeGlow->SetTransparency( kRenderTransAdd, 255, 0, 0, 128, kRenderFxNoDissipation );
+			m_pEyeGlow->SetColor( 255, 0, 0 );
 		}
 
 		m_pEyeGlow->SetBrightness(164, 0.1f);
@@ -2635,8 +2654,8 @@ void CNPC_Manhack::StartEye(void)
 
 		if (m_bHackedByAlyx)
 		{
-			m_pLightGlow->SetTransparency(kRenderTransAdd, 0, 255, 0, 128, kRenderFxNoDissipation);
-			m_pLightGlow->SetColor(0, 255, 0);
+			m_pLightGlow->SetTransparency( kRenderTransAdd, 0, 255, 0, 128, kRenderFxNoDissipation );
+			m_pLightGlow->SetColor( 0, 255, 0 );
 		}
 		else
 		{
@@ -3141,6 +3160,26 @@ void CNPC_Manhack::InputUnpack(inputdata_t& inputdata)
 	SetCondition(COND_LIGHT_DAMAGE);
 }
 
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Creates the sprite if it has been destroyed
+//-----------------------------------------------------------------------------
+void CNPC_Manhack::InputEnableSprites( inputdata_t &inputdata )
+{
+	m_bNoSprites = false;
+	StartEye();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Destroys the sprite
+//-----------------------------------------------------------------------------
+void CNPC_Manhack::InputDisableSprites( inputdata_t &inputdata )
+{
+	KillSprites( 0.0 );
+	m_bNoSprites = true;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *pPhysGunUser - 
@@ -3167,6 +3206,11 @@ void CNPC_Manhack::OnPhysGunPickup(CBasePlayer* pPhysGunUser, PhysGunPickup_t re
 	}
 	else
 	{
+#ifdef MAPBASE
+		// Store the previous owner in case of npc_maker
+		m_hPrevOwner.Set(GetOwnerEntity());
+#endif
+
 		// Suppress collisions between the manhack and the player; we're currently bumping
 		// almost certainly because it's not purely a physics object.
 		SetOwnerEntity(pPhysGunUser);
@@ -3183,7 +3227,13 @@ void CNPC_Manhack::OnPhysGunPickup(CBasePlayer* pPhysGunUser, PhysGunPickup_t re
 void CNPC_Manhack::OnPhysGunDrop(CBasePlayer* pPhysGunUser, PhysGunDrop_t Reason)
 {
 	// Stop suppressing collisions between the manhack and the player
-	SetOwnerEntity(NULL);
+#ifndef MAPBASE
+	SetOwnerEntity( NULL );
+#else
+	SetOwnerEntity( m_hPrevOwner );
+
+	m_hPrevOwner = NULL;
+#endif
 
 	m_bHeld = false;
 
@@ -3255,6 +3305,20 @@ float CNPC_Manhack::GetMaxEnginePower()
 
 	return 1.0f;
 }
+
+#ifdef MAPBASE
+//-----------------------------------------------------------------------------
+// Purpose: Option to restore Alyx's interactions with non-rollermines
+//-----------------------------------------------------------------------------
+bool CNPC_Manhack::CanInteractWith( CAI_BaseNPC *pUser )
+{
+#ifdef HL2_EPISODIC
+	return npc_alyx_interact_manhacks.GetBool();
+#else
+	return false;
+#endif
+}
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -3387,34 +3451,51 @@ void CNPC_Manhack::SetEyeState(int state)
 		if (m_pEyeGlow)
 		{
 			//Toggle our state
-			m_pEyeGlow->SetColor(255, 128, 0);
-			m_pEyeGlow->SetScale(0.15f, 0.1f);
-			m_pEyeGlow->SetBrightness(164, 0.1f);
-			m_pEyeGlow->m_nRenderFX = kRenderFxStrobeFast;
-
-			if (m_pEyeGlow, m_bHackedByTraitors)
+#ifdef MAPBASE
+				// Makes it easier to distinguish between hostile and friendly manhacks.
+			if (m_bHackedByAlyx)
+			{
+				m_pEyeGlow->SetColor(0, 0, 255);
+				m_pEyeGlow->SetScale(0.35f, 0.6f);
+			}
+			else if (m_bHackedByTraitors)
 			{
 				m_pEyeGlow->SetColor(255, 247, 0);
 				m_pEyeGlow->SetScale(0.15f, 0.1f);
-				m_pEyeGlow->SetBrightness(164, 0.1f);
-				m_pEyeGlow->m_nRenderFX = kRenderFxStrobeFast;
 			}
+			else
+			{
+				m_pEyeGlow->SetColor(255, 128, 0);
+				m_pEyeGlow->SetScale(0.15f, 0.1f);
+			}
+#else
+			m_pEyeGlow->SetColor(255, 128, 0);
+			m_pEyeGlow->SetScale(0.15f, 0.1f);
+#endif
+			m_pEyeGlow->SetBrightness(164, 0.1f);
+			m_pEyeGlow->m_nRenderFX = kRenderFxStrobeFast;
 		}
 
 		if (m_pLightGlow)
 		{
-			m_pLightGlow->SetColor(255, 128, 0);
-			m_pLightGlow->SetScale(0.15f, 0.1f);
-			m_pLightGlow->SetBrightness(164, 0.1f);
-			m_pLightGlow->m_nRenderFX = kRenderFxStrobeFast;
-
-			if (m_pLightGlow, m_bHackedByTraitors)
+#ifdef MAPBASE
+			if (m_bHackedByAlyx)
+			{
+				m_pLightGlow->SetColor(0, 0, 255);
+				m_pLightGlow->SetScale(0.35f, 0.6f);
+			}
+			else if (m_bHackedByTraitors)
 			{
 				m_pLightGlow->SetColor(255, 247, 0);
 				m_pLightGlow->SetScale(0.15f, 0.1f);
-				m_pLightGlow->SetBrightness(164, 0.1f);
-				m_pLightGlow->m_nRenderFX = kRenderFxStrobeFast;
 			}
+
+#else
+			m_pLightGlow->SetColor(255, 128, 0);
+			m_pLightGlow->SetScale(0.15f, 0.1f);
+#endif
+			m_pLightGlow->SetBrightness(164, 0.1f);
+			m_pLightGlow->m_nRenderFX = kRenderFxStrobeFast;
 		}
 
 		EmitSound("NPC_Manhack.Stunned");
@@ -3427,43 +3508,37 @@ void CNPC_Manhack::SetEyeState(int state)
 		if (m_pEyeGlow)
 		{
 			//Toggle our state
-#ifndef EZ
 			if (m_bHackedByAlyx)
 			{
 				m_pEyeGlow->SetColor(0, 255, 0);
 			}
+			else if(m_bHackedByTraitors)
+			{
+				m_pEyeGlow->SetColor(255, 94, 0);
+			}
 			else
-#endif
 			{
 				m_pEyeGlow->SetColor(255, 0, 0);
-
-				if (m_pEyeGlow, m_bHackedByTraitors)
-				{
-					m_pEyeGlow->SetColor(255, 94, 0);
-				}
 			}
 
 			m_pEyeGlow->SetScale(0.25f, 0.5f);
 			m_pEyeGlow->SetBrightness(164, 0.1f);
 			m_pEyeGlow->m_nRenderFX = kRenderFxNone;
-		}
+	}
 
 		if (m_pLightGlow)
 		{
-#ifndef EZ
 			if (m_bHackedByAlyx)
 			{
 				m_pLightGlow->SetColor(0, 255, 0);
 			}
+			else if (m_bHackedByTraitors)
+			{
+				m_pLightGlow->SetColor(255, 94, 0);
+			}
 			else
-#endif
 			{
 				m_pLightGlow->SetColor(255, 0, 0);
-
-				if (m_pLightGlow, m_bHackedByTraitors)
-				{
-					m_pLightGlow->SetColor(255, 94, 0);
-				}
 			}
 
 			m_pLightGlow->SetScale(0.25f, 0.5f);
@@ -3472,87 +3547,8 @@ void CNPC_Manhack::SetEyeState(int state)
 		}
 
 		break;
-	}
-#ifdef EZ
-	case MANHACK_EYE_STATE_CHASE:
-	{
-		if (m_pEyeGlow)
-		{
-			//Toggle our state
-			m_pEyeGlow->SetColor(0, 255, 255);
-			m_pEyeGlow->SetScale(0.25f, 0.5f);
-			m_pEyeGlow->SetBrightness(164, 0.1f);
-			m_pEyeGlow->m_nRenderFX = kRenderFxNone;
+}
 
-			if (m_pEyeGlow, m_bHackedByTraitors)
-			{
-				m_pEyeGlow->SetColor(255, 136, 0);
-				m_pEyeGlow->SetScale(0.25f, 0.5f);
-				m_pEyeGlow->SetBrightness(164, 0.1f);
-				m_pEyeGlow->m_nRenderFX = kRenderFxNone;
-			}
-		}
-
-		if (m_pLightGlow)
-		{
-			m_pLightGlow->SetColor(0, 255, 255);
-			m_pLightGlow->SetScale(0.25f, 0.5f);
-			m_pLightGlow->SetBrightness(164, 0.1f);
-			m_pLightGlow->m_nRenderFX = kRenderFxNone;
-
-			if (m_pLightGlow, m_bHackedByTraitors)
-			{
-				m_pLightGlow->SetColor(255, 136, 0);
-				m_pLightGlow->SetScale(0.25f, 0.5f);
-				m_pLightGlow->SetBrightness(164, 0.1f);
-				m_pLightGlow->m_nRenderFX = kRenderFxNone;
-			}
-		}
-
-		break;
-	}
-
-	case MANHACK_EYE_STATE_IDLE:
-#ifdef EZ2
-		if (!m_bHackedByAlyx)
-#endif
-		{
-			if (m_pEyeGlow)
-			{
-				//Toggle our state
-				m_pEyeGlow->SetColor(0, 255, 255);
-				m_pEyeGlow->SetScale(0.25f, 0.5f);
-				m_pEyeGlow->SetBrightness(164, 0.1f);
-				m_pEyeGlow->m_nRenderFX = kRenderFxNone;
-
-				if (m_pEyeGlow, m_bHackedByTraitors)
-				{
-					m_pEyeGlow->SetColor(255, 204, 0);
-					m_pEyeGlow->SetScale(0.25f, 0.5f);
-					m_pEyeGlow->SetBrightness(164, 0.1f);
-					m_pEyeGlow->m_nRenderFX = kRenderFxNone;
-				}
-			}
-
-			if (m_pLightGlow)
-			{
-				m_pLightGlow->SetColor(0, 255, 255);
-				m_pLightGlow->SetScale(0.25f, 0.5f);
-				m_pLightGlow->SetBrightness(164, 0.1f);
-				m_pLightGlow->m_nRenderFX = kRenderFxNone;
-
-				if (m_pLightGlow, m_bHackedByTraitors)
-				{
-					m_pLightGlow->SetColor(255, 204, 0);
-					m_pLightGlow->SetScale(0.25f, 0.5f);
-					m_pLightGlow->SetBrightness(164, 0.1f);
-					m_pLightGlow->m_nRenderFX = kRenderFxNone;
-				}
-			}
-
-			break;
-		}
-#endif
 	default:
 		if (m_pEyeGlow)
 			m_pEyeGlow->m_nRenderFX = kRenderFxNone;

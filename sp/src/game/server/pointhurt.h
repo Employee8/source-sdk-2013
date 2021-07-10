@@ -18,6 +18,10 @@ public:
 	void InputToggle(inputdata_t &inputdata);
 	void InputHurt(inputdata_t &inputdata);
 	
+#ifdef MAPBASE
+	bool KeyValue( const char *szKeyName, const char *szValue );
+#endif
+
 	DECLARE_DATADESC();
 
 	int			m_nDamage;

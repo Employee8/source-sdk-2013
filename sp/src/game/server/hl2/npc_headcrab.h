@@ -153,6 +153,10 @@ protected:
 
 	bool	m_bHangingFromCeiling;
 	float	m_flIlluminatedTime;
+
+#ifdef MAPBASE
+	COutputEvent m_OnLeap;
+#endif
 };
 
 

@@ -172,8 +172,15 @@ private:
 	float	m_flSuperFastAttackTime;
 	float   m_flGrenadePullTime;
 	
+#ifdef MAPBASE
+	int		m_iGrenadeCount = ZOMBINE_MAX_GRENADES;
+#else
 	int		m_iGrenadeCount;
+#endif
 
+#ifdef MAPBASE
+	COutputEHANDLE m_OnGrenade;
+#endif
 	EHANDLE	m_hGrenade;
 
 protected:
@@ -189,7 +196,12 @@ BEGIN_DATADESC( CNPC_Zombine )
 	DEFINE_FIELD( m_flSuperFastAttackTime, FIELD_TIME ),
 	DEFINE_FIELD( m_hGrenade, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_flGrenadePullTime, FIELD_TIME ),
+#ifdef MAPBASE
+	DEFINE_KEYFIELD( m_iGrenadeCount, FIELD_INTEGER, "NumGrenades" ),
+	DEFINE_OUTPUT( m_OnGrenade, "OnPullGrenade" ),
+#else
 	DEFINE_FIELD( m_iGrenadeCount, FIELD_INTEGER ),
+#endif
 	DEFINE_INPUTFUNC( FIELD_VOID,	"StartSprint", InputStartSprint ),
 	DEFINE_INPUTFUNC( FIELD_VOID,	"PullGrenade", InputPullGrenade ),
 END_DATADESC()
@@ -206,7 +218,9 @@ void CNPC_Zombine::Spawn( void )
 	Precache();
 
 	m_fIsTorso = false;
+#ifndef MAPBASE // Controlled by KV
 	m_fIsHeadless = false;
+#endif
 	
 #ifdef EZ
 	if ( m_tEzVariant == EZ_VARIANT_RAD ) 
@@ -239,11 +253,17 @@ void CNPC_Zombine::Spawn( void )
 
 	g_flZombineGrenadeTimes = gpGlobals->curtime;
 	m_flGrenadePullTime = gpGlobals->curtime;
+
+#ifndef MAPBASE
+	m_iGrenadeCount = ZOMBINE_MAX_GRENADES;
+#endif
+
 #ifdef EZ
 	// Xen zombine do not use grenades, otherwise start with the max number of grenades
-	m_iGrenadeCount = m_tEzVariant == EZ_VARIANT_XEN ? 0 : ZOMBINE_MAX_GRENADES;
-#else
-	m_iGrenadeCount = ZOMBINE_MAX_GRENADES;
+	if ( m_tEzVariant == EZ_VARIANT_XEN )
+	{
+		m_iGrenadeCount = 0;
+	} 
 #endif
 }
 
@@ -664,6 +684,9 @@ void CNPC_Zombine::HandleAnimEvent( animevent_t *pEvent )
 				pGrenade->SetParent( this, iAttachment );
 
 				pGrenade->SetDamage( 200.0f );
+#ifdef MAPBASE
+				m_OnGrenade.Set(pGrenade, pGrenade, this);
+#endif
 				m_hGrenade = pGrenade;
 				
 #ifdef EZ
