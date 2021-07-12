@@ -28,11 +28,6 @@ $Project "Server (Entropy Zero)"
 			$File	"ez1\achievements_EZ.cpp"
 			$File	"ez1\EZ_Achievements_Reset.cpp"
 		}
-		$Folder	"HE DLL"
-		{
-			$File	"Human_Error\vehicle_drivable_apc.h"
-			$File	"Human_Error\vehicle_drivable_apc.cpp"
-		}
 		$Folder	"EZ2 DLL"
 		{
 			$File	"ez2\npc_basepredator.h"
@@ -40,6 +35,15 @@ $Project "Server (Entropy Zero)"
 			$File	"ez2\npc_bullsquid.h"
 			$File	"ez2\npc_bullsquid.cpp"
 			$File	"ez2\prop_command_point.cpp"
+		}
+		$Folder "EZU DLL"
+		{
+			$File "ezu\npc_bec.cpp"
+		}
+		$Folder	"HE DLL"
+		{
+			$File	"Human_Error\vehicle_drivable_apc.h"
+			$File	"Human_Error\vehicle_drivable_apc.cpp"
 		}
 		
 		$Folder	"Mod"
