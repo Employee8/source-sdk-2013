@@ -268,7 +268,15 @@ Class_T	CNPC_Manhack::Classify(void)
 #endif
 
 #ifdef EZ1
-	return CLASS_MANHACK; // Manhacks are always CLASS_MANHACK in EZ1
+	if (m_bHackedByTraitors)
+	{
+		return CLASS_PLAYER_ALLY; // You're right, they are.
+								  // except when they aren't lmao gottem
+	}
+	else
+	{
+		return CLASS_MANHACK; // Manhacks are always CLASS_MANHACK in EZ1
+	}
 #else
 	return ( m_bHeld||m_bHackedByAlyx ) ? CLASS_PLAYER_ALLY : CLASS_MANHACK; 
 #endif
