@@ -3588,7 +3588,14 @@ float CNPC_MetroPolice::MaxYawSpeed( void )
 //-----------------------------------------------------------------------------
 Class_T	CNPC_MetroPolice::Classify ( void )
 {
-	return CLASS_METROPOLICE;
+	if (m_bTraitorCops)
+	{
+		return CLASS_PLAYER_ALLY;
+	}
+	else
+	{
+		return CLASS_METROPOLICE;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -3674,17 +3681,17 @@ void CNPC_MetroPolice::OnAnimEventStartDeployManhack( void )
 		pManhack->AddSpawnFlags( SF_NPC_FADE_CORPSE );
 	}
 
-	pManhack->Spawn();
+	if (m_bTraitorCops)
 	{
-		if (m_bTraitorCops)
-		{
-			pManhack->KeyValue("TraitorHack", "1");
-		}
-		else
-		{
-			pManhack->KeyValue("TraitorHack", "0");
-		}
+		pManhack->KeyValue("TraitorHack", "1");
 	}
+	else
+	{
+		pManhack->KeyValue("TraitorHack", "0");
+	}
+
+	pManhack->Spawn();
+
 
 	// Make us move with his hand until we're deployed
 	pManhack->SetParent( this, handAttachment );
