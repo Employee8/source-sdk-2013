@@ -127,7 +127,6 @@ END_DATADESC()
 void CNPC_Bec::SelectModel()
 {
 	SetModelName( AllocPooledString( BEC_MODEL ) );
-	m_nSkin = (BEC_SKIN);
 }
 
 //------------------------------------------------------------------------------
@@ -217,6 +216,8 @@ void CNPC_Bec::Spawn(void)
 
 	m_iHealth = 80;
 
+	m_nSkin = (BEC_SKIN);
+
 	BaseClass::Spawn();
 
 	AddEFlags( EFL_NO_DISSOLVE | EFL_NO_MEGAPHYSCANNON_RAGDOLL | EFL_NO_PHYSCANNON_INTERACTION );
@@ -295,7 +296,7 @@ void CNPC_Bec::DeathSound( const CTakeDamageInfo &info )
 	// Sentences don't play on dead NPCs
 	SentenceStop();
 
-	EmitSound( "npc_metropolice.die" );
+	EmitSound( "bec.die" );
 
 }
 
