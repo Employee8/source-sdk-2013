@@ -26,6 +26,9 @@ public:
 
 	DECLARE_SERVERCLASS();
 
+	#define MIN_SPREAD_COMPONENT 0.03490 // Was 0.13053
+	#define MAX_SPREAD_COMPONENT 0.34202 // Was 0.25881
+
 	void	ItemPostFrame( void );
 	void	Precache( void );
 
@@ -33,21 +36,26 @@ public:
 	void	PrimaryAttack(void); // Breadman
 #endif	
 	void	SecondaryAttack( void );
+	void	BurstAttack(int burstSize, float cycleRate); // Mark:Thing i believe is from 1upD's weapon_smg2.cpp
+													     // it for AR2 Burst Firce Code
 	void	DelayedAttack( void );
 
 	const char *GetTracerType( void ) { return "AR2Tracer"; }
 
 	void	AddViewKick( void );
 
-	void	FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles );
+	void	FireNPCPrimaryAttack( CBaseCombatCharacter* pOperator, Vector& vecShootOrigin, Vector& vecShootDir);
 	void	FireNPCSecondaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles );
 	void	Operator_ForceNPCFire( CBaseCombatCharacter  *pOperator, bool bSecondary );
 	void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
 
-	int		GetMinBurst( void ) { return 2; }
-	int		GetMaxBurst( void ) { return 5; }
+	float	GetBurstCycleRate(void) { return 0.3f; };
+	int		GetMinBurst( void ) { return 3; }
+	int		GetMaxBurst( void ) { return 3; }
+	int		GetBurstSize(void) { return 3; };
 #ifdef EZ1
-	float	GetFireRate( void ) { return 0.12f; } // Breadman - lowered for prototype
+	float	GetFireRate(void) { return 0.1f; } // Breadman - lowered for prototype
+											    // Mark: but changed again for EZU, used to be 0.012f
 #else
 	float	GetFireRate( void ) { return 0.1f; }
 #endif
@@ -61,16 +69,22 @@ public:
 	
 	void	DoImpactEffect( trace_t &tr, int nDamageType );
 
-	virtual const Vector& GetBulletSpread( void )
+	virtual const Vector& GetBulletSpread(void)
 	{
-		static Vector cone;
-		
-#ifdef EZ1
-		cone = VECTOR_CONE_10DEGREES;
-#else
-		cone = VECTOR_CONE_3DEGREES;
-#endif
 
+		float l_flSpreadRegen = ((gpGlobals->curtime - m_flLastPrimaryAttack) / GetBurstCycleRate()) * (MAX_SPREAD_COMPONENT - MIN_SPREAD_COMPONENT) / 2;
+		m_flSpreadComponent -= l_flSpreadRegen;
+
+		// Minimum spread
+		if (m_flSpreadComponent < MIN_SPREAD_COMPONENT)
+			m_flSpreadComponent = MIN_SPREAD_COMPONENT;
+
+		// Maximum spread
+		if (m_flSpreadComponent > MAX_SPREAD_COMPONENT)
+			m_flSpreadComponent = MAX_SPREAD_COMPONENT;
+
+
+		static const Vector cone = Vector(m_flSpreadComponent, m_flSpreadComponent, m_flSpreadComponent);
 		return cone;
 	}
 
@@ -78,6 +92,10 @@ public:
 
 protected:
 
+	int						m_iBurstSize;
+	float					m_flLastPrimaryAttack;
+	float					m_flSpreadComponent;
+	float					m_flLastAttack;
 	float					m_flDelayedFire;
 	bool					m_bShotDelayed;
 	int						m_nVentPose;

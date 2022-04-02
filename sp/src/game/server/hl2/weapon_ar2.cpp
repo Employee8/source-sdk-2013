@@ -175,6 +175,7 @@ CWeaponAR2::CWeaponAR2( )
 {
 	m_fMinRange1	= 65;
 	m_fMaxRange1	= 2048;
+	m_iBurstSize = 0;
 
 	m_fMinRange2	= 256;
 	m_fMaxRange2	= 1024;
@@ -268,37 +269,7 @@ void CWeaponAR2::DoImpactEffect( trace_t &tr, int nDamageType )
 //-----------------------------------------------------------------------------
 void CWeaponAR2::PrimaryAttack( void )
 {
-	if (CBasePlayer *pPlayer = ToBasePlayer(GetOwner()))
-	{
-		SendWeaponAnim(ACT_VM_PRIMARYATTACK);
-		WeaponSound( SINGLE );
-		
-
-		// Fire the bullets
-		FireBulletsInfo_t info;
-		info.m_iShots = 2;
-		info.m_vecSrc = pPlayer->Weapon_ShootPosition();
-		info.m_vecDirShooting = pPlayer->GetAutoaimVector(AUTOAIM_SCALE_DEFAULT);
-		info.m_vecSpread = pPlayer->GetAttackSpread(this);
-		info.m_flDistance = MAX_TRACE_LENGTH;
-		info.m_iAmmoType = m_iPrimaryAmmoType;
-		info.m_iTracerFreq = 2;
-
-		pPlayer->FireBullets(info);
-		pPlayer->DoMuzzleFlash();
-
-		// Time we wait before allowing to throw another
-		m_flNextPrimaryAttack = gpGlobals->curtime + 0.09f;
-
-		m_iPrimaryAttacks++;
-		gamestats->Event_WeaponFired(pPlayer, false, GetClassname());
-
-		m_iClip1 = m_iClip1 - 1;
-
-		AddViewKick();
-
-		BaseClass::ItemPostFrame();
-	}
+	BurstAttack(GetBurstSize(), GetBurstCycleRate());
 }
 #endif
 
@@ -447,6 +418,120 @@ void CWeaponAR2::SecondaryAttack( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CWeaponAR2::BurstAttack(int burstSize, float cycleRate)
+{
+	// Bursts always use the weapon's fire rate
+	float fireRate = GetFireRate();
+
+	if (m_bFireOnEmpty)
+	{
+		return;
+	}
+
+	if (!GetOwner())
+	{
+		Msg("Error: SMG2 has NULL owner!");
+		return;
+	}
+
+	// Only the player fires this way so we can cast
+	CBasePlayer* pPlayer = ToBasePlayer(GetOwner());
+	if (!pPlayer)
+		return;
+
+	m_nShotsFired++;
+
+	pPlayer->DoMuzzleFlash();
+
+	// To make the firing framerate independent, we may have to fire more than one bullet here on low-framerate systems, 
+	// especially if the weapon we're firing has a really fast rate of fire.
+	int iBulletsToFire = 0;
+
+	// If the last time fired was longer ago than the cycle rate, reset the burst count
+	if (gpGlobals->curtime - m_flLastPrimaryAttack >= cycleRate)
+	{
+		m_iBurstSize = 0;
+	}
+
+	// MUST call sound before removing a round from the clip of a CHLMachineGun
+	while (m_flNextPrimaryAttack <= gpGlobals->curtime)
+	{
+		WeaponSound(SINGLE, m_flNextPrimaryAttack);
+
+		// Add the bullets to fire to the burst count
+		m_iBurstSize++;
+
+		// Increase weapon spread;
+		m_flSpreadComponent += (MAX_SPREAD_COMPONENT - MIN_SPREAD_COMPONENT) / (float)burstSize; // 1/3 The difference between max and min
+
+		// If the burst count is greater than the burst size, wait for the cycle rate and adjust
+		if (m_iBurstSize >= burstSize) {
+			m_iBurstSize = 0;
+			m_flNextPrimaryAttack = m_flNextPrimaryAttack + cycleRate;
+			m_flNextSecondaryAttack = m_flNextPrimaryAttack + cycleRate; // SMG2 shares primary attack between primary and secondary
+		}
+		else {
+			m_flNextPrimaryAttack = m_flNextPrimaryAttack + fireRate;
+			m_flNextSecondaryAttack = m_flNextPrimaryAttack + fireRate; // SMG2 shares primary attack between primary and secondary
+		}
+
+		iBulletsToFire++;
+	}
+
+	// Make sure we don't fire more than the amount in the clip, if this weapon uses clips
+	if (UsesClipsForAmmo1())
+	{
+		if (iBulletsToFire > m_iClip1)
+			iBulletsToFire = m_iClip1;
+		m_iClip1 -= iBulletsToFire;
+	}
+
+	m_iPrimaryAttacks++;
+	gamestats->Event_WeaponFired(pPlayer, true, GetClassname());
+
+	// Fire the bullets
+	FireBulletsInfo_t info;
+	info.m_iShots = iBulletsToFire;
+	info.m_vecSrc = pPlayer->Weapon_ShootPosition();
+	info.m_vecDirShooting = pPlayer->GetAutoaimVector(AUTOAIM_SCALE_DEFAULT);
+	info.m_vecSpread = GetOwner()->GetAttackSpread(this);
+	info.m_flDistance = MAX_TRACE_LENGTH;
+	info.m_iAmmoType = m_iPrimaryAmmoType;
+	info.m_iTracerFreq = 1;
+	FireBullets(info);
+
+	// Update last attack time - need to do this after calculating weapon spread
+	m_flLastPrimaryAttack = gpGlobals->curtime;
+
+	//Factor in the view kick
+	AddViewKick();
+
+	CSoundEnt::InsertSound(SOUND_COMBAT, GetAbsOrigin(), SOUNDENT_VOLUME_MACHINEGUN, 0.2, pPlayer);
+
+	if (!m_iClip1 && pPlayer->GetAmmoCount(m_iPrimaryAmmoType) <= 0)
+	{
+		// HEV suit - indicate out of ammo condition
+		pPlayer->SetSuitUpdate("!HEV_AMO0", FALSE, 0);
+	}
+
+	SendWeaponAnim(GetPrimaryAttackActivity());
+	pPlayer->SetAnimation(PLAYER_ATTACK1);
+
+	// Register a muzzleflash for the AI
+	pPlayer->SetMuzzleFlashTime(gpGlobals->curtime + 0.5);
+	SetWeaponIdleTime(gpGlobals->curtime + 3.0f);
+
+	CBasePlayer* pOwner = ToBasePlayer(GetOwner());
+	if (pOwner)
+	{
+		m_iPrimaryAttacks++;
+		gamestats->Event_WeaponFired(pOwner, true, GetClassname());
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Override if we're waiting to release a shot
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
@@ -471,39 +556,16 @@ bool CWeaponAR2::Reload( void )
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Input  : *pOperator - 
 //-----------------------------------------------------------------------------
-void CWeaponAR2::FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles )
+void CWeaponAR2::FireNPCPrimaryAttack(CBaseCombatCharacter* pOperator, Vector& vecShootOrigin, Vector& vecShootDir)
 {
-	Vector vecShootOrigin, vecShootDir;
+	// FIXME: use the returned number of bullets to account for >10hz firerate
+	WeaponSoundRealtime(SINGLE_NPC);
 
-	CAI_BaseNPC *npc = pOperator->MyNPCPointer();
-	ASSERT( npc != NULL );
-
-	if ( bUseWeaponAngles )
-	{
-		QAngle	angShootDir;
-		GetAttachment( LookupAttachment( "muzzle" ), vecShootOrigin, angShootDir );
-		AngleVectors( angShootDir, &vecShootDir );
-	}
-	else 
-	{
-		vecShootOrigin = pOperator->Weapon_ShootPosition();
-		vecShootDir = npc->GetActualShootTrajectory( vecShootOrigin );
-	}
-
-	WeaponSoundRealtime( SINGLE_NPC );
-
-	CSoundEnt::InsertSound( SOUND_COMBAT|SOUND_CONTEXT_GUNFIRE, pOperator->GetAbsOrigin(), SOUNDENT_VOLUME_MACHINEGUN, 0.2, pOperator, SOUNDENT_CHANNEL_WEAPON, pOperator->GetEnemy() );
-
-#ifdef EZ1
-	pOperator->FireBullets( 2, vecShootOrigin, vecShootDir, VECTOR_CONE_10DEGREES, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 2 );
-#else
-	pOperator->FireBullets( 1, vecShootOrigin, vecShootDir, VECTOR_CONE_PRECALCULATED, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 2 );
-#endif
-
-	// NOTENOTE: This is overriden on the client-side
-	// pOperator->DoMuzzleFlash();
+	CSoundEnt::InsertSound(SOUND_COMBAT | SOUND_CONTEXT_GUNFIRE, pOperator->GetAbsOrigin(), SOUNDENT_VOLUME_MACHINEGUN, 0.2, pOperator, SOUNDENT_CHANNEL_WEAPON, pOperator->GetEnemy());
+	pOperator->FireBullets(1, vecShootOrigin, vecShootDir, GetBulletSpread(), MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 2, entindex(), 0);
+	pOperator->DoMuzzleFlash(); // Changing the shots doesn't help - just blows us up !
+	m_flSpreadComponent += (MAX_SPREAD_COMPONENT - MIN_SPREAD_COMPONENT) * 0.33f; // 1/3 The difference between max and min
 
 	m_iClip1 = m_iClip1 - 1;
 }
@@ -604,45 +666,48 @@ void CWeaponAR2::FireNPCSecondaryAttack( CBaseCombatCharacter *pOperator, bool b
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CWeaponAR2::Operator_ForceNPCFire( CBaseCombatCharacter *pOperator, bool bSecondary )
+void CWeaponAR2::Operator_ForceNPCFire(CBaseCombatCharacter* pOperator, bool bSecondary)
 {
-	if ( bSecondary )
-	{
-		FireNPCSecondaryAttack( pOperator, true );
-	}
-	else
-	{
-		// Ensure we have enough rounds in the clip
-		m_iClip1++;
+	// Ensure we have enough rounds in the clip
+	m_iClip1++;
 
-		FireNPCPrimaryAttack( pOperator, true );
-	}
+	Vector vecShootOrigin, vecShootDir;
+	QAngle	angShootDir;
+	GetAttachment(LookupAttachment("muzzle"), vecShootOrigin, angShootDir);
+	AngleVectors(angShootDir, &vecShootDir);
+	FireNPCPrimaryAttack(pOperator, vecShootOrigin, vecShootDir);
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
-// Input  : *pEvent - 
-//			*pOperator - 
 //-----------------------------------------------------------------------------
-void CWeaponAR2::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator )
+void CWeaponAR2::Operator_HandleAnimEvent(animevent_t* pEvent, CBaseCombatCharacter* pOperator)
 {
-	switch( pEvent->event )
-	{ 
-		case EVENT_WEAPON_AR2:
-			{
-				FireNPCPrimaryAttack( pOperator, false );
-			}
-			break;
+	switch (pEvent->event)
+	{
+	case EVENT_WEAPON_AR2:
+	case EVENT_WEAPON_SMG2:
+	case EVENT_WEAPON_SMG1:
+	{
+		Vector vecShootOrigin, vecShootDir;
+		QAngle angDiscard;
 
-		case EVENT_WEAPON_AR2_ALTFIRE:
-			{
-				FireNPCSecondaryAttack( pOperator, false );
-			}
-			break;
+		// Support old style attachment point firing
+		if ((pEvent->options == NULL) || (pEvent->options[0] == '\0') || (!pOperator->GetAttachment(pEvent->options, vecShootOrigin, angDiscard)))
+		{
+			vecShootOrigin = pOperator->Weapon_ShootPosition();
+		}
 
-		default:
-			CBaseCombatWeapon::Operator_HandleAnimEvent( pEvent, pOperator );
-			break;
+		CAI_BaseNPC* npc = pOperator->MyNPCPointer();
+		ASSERT(npc != NULL);
+		vecShootDir = npc->GetActualShootTrajectory(vecShootOrigin);
+
+		FireNPCPrimaryAttack(pOperator, vecShootOrigin, vecShootDir);
+	}
+	break;
+	default:
+		BaseClass::Operator_HandleAnimEvent(pEvent, pOperator);
+		break;
 	}
 }
 
@@ -653,8 +718,8 @@ void CWeaponAR2::AddViewKick( void )
 {
 	#define	EASY_DAMPEN			0.5f
 #ifdef EZ1
-	#define	MAX_VERTICAL_KICK	12.0f	//Degrees - was 9.0
-	#define	SLIDE_LIMIT			1.0f	//Seconds - was 5.0
+	#define	MAX_VERTICAL_KICK	10.0f	//Degrees - was 9.0
+	#define	SLIDE_LIMIT			6.0f	//Seconds - was 5.0
 #elif EZ2
 	#define	MAX_VERTICAL_KICK	10.0f	//Degrees - was 9.0
 	#define	SLIDE_LIMIT			2.0f	//Seconds - was 5.0
