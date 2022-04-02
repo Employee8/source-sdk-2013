@@ -270,7 +270,7 @@ Class_T	CNPC_Manhack::Classify(void)
 #ifdef EZ1
 	if (m_bHackedByTraitors)
 	{
-		return CLASS_PLAYER_ALLY; // You're right, they are.
+		return CLASS_PLAYER_ALLY; // To the comment below, you're right, they are.
 								  // except when they aren't lmao gottem
 	}
 	else
@@ -2627,6 +2627,12 @@ EyeGlow_t* CNPC_Manhack::GetEyeGlowData(int index)
 			eyeGlow->blue = 0;
 #endif
 		}
+		else if (m_bHackedByTraitors)
+		{
+			eyeGlow->red = 255;
+			eyeGlow->green = 0;
+			eyeGlow->blue = 0;
+		}
 		else
 		{
 			eyeGlow->red = 255;
@@ -3536,16 +3542,23 @@ void CNPC_Manhack::SetEyeState(int state)
 				m_pEyeGlow->SetColor(0, 0, 255);
 				m_pEyeGlow->SetScale(0.35f, 0.6f);
 			}
-			else if (m_bHackedByTraitors)
+			else
+			{
+				m_pEyeGlow->SetColor(255, 128, 0);
+				m_pEyeGlow->SetScale(0.15f, 0.1f);
+			}
+
+			if (m_bHackedByTraitors)
 			{
 				m_pEyeGlow->SetColor(255, 247, 0);
-				m_pEyeGlow->SetScale(0.15f, 0.1f);
+				m_pEyeGlow->SetScale(0.35f, 0.6f);
 			}
 			else
 			{
 				m_pEyeGlow->SetColor(255, 128, 0);
 				m_pEyeGlow->SetScale(0.15f, 0.1f);
 			}
+
 #else
 			m_pEyeGlow->SetColor(255, 128, 0);
 			m_pEyeGlow->SetScale(0.15f, 0.1f);
@@ -3562,9 +3575,20 @@ void CNPC_Manhack::SetEyeState(int state)
 				m_pLightGlow->SetColor(0, 0, 255);
 				m_pLightGlow->SetScale(0.35f, 0.6f);
 			}
-			else if (m_bHackedByTraitors)
+			else
+			{
+				m_pLightGlow->SetColor(255, 128, 0);
+				m_pLightGlow->SetScale(0.15f, 0.1f);
+			}
+
+			if (m_bHackedByTraitors)
 			{
 				m_pLightGlow->SetColor(255, 247, 0);
+				m_pLightGlow->SetScale(0.15f, 0.1f);
+			}
+			else
+			{
+				m_pLightGlow->SetColor(255, 128, 0);
 				m_pLightGlow->SetScale(0.15f, 0.1f);
 			}
 
@@ -3590,7 +3614,12 @@ void CNPC_Manhack::SetEyeState(int state)
 			{
 				m_pEyeGlow->SetColor(0, 255, 0);
 			}
-			else if(m_bHackedByTraitors)
+			else
+			{
+				m_pEyeGlow->SetColor(255, 0, 0);
+			}
+
+			if (m_bHackedByTraitors)
 			{
 				m_pEyeGlow->SetColor(255, 94, 0);
 			}
@@ -3602,7 +3631,7 @@ void CNPC_Manhack::SetEyeState(int state)
 			m_pEyeGlow->SetScale(0.25f, 0.5f);
 			m_pEyeGlow->SetBrightness(164, 0.1f);
 			m_pEyeGlow->m_nRenderFX = kRenderFxNone;
-	}
+		}
 
 		if (m_pLightGlow)
 		{
@@ -3610,7 +3639,12 @@ void CNPC_Manhack::SetEyeState(int state)
 			{
 				m_pLightGlow->SetColor(0, 255, 0);
 			}
-			else if (m_bHackedByTraitors)
+			else
+			{
+				m_pLightGlow->SetColor(255, 0, 0);
+			}
+
+			if (m_bHackedByTraitors)
 			{
 				m_pLightGlow->SetColor(255, 94, 0);
 			}
@@ -3625,13 +3659,92 @@ void CNPC_Manhack::SetEyeState(int state)
 		}
 
 		break;
-}
+
+	}
+#ifdef EZ
+	case MANHACK_EYE_STATE_CHASE:
+		if (m_pEyeGlow)
+		{
+			//Toggle our state
+			m_pEyeGlow->SetColor(0, 255, 255);
+			m_pEyeGlow->SetScale(0.25f, 0.5f);
+			m_pEyeGlow->SetBrightness(164, 0.1f);
+			m_pEyeGlow->m_nRenderFX = kRenderFxNone;
+
+
+			if (m_pEyeGlow, m_bHackedByTraitors)
+			{
+				m_pEyeGlow->SetColor(255, 136, 0);
+				m_pEyeGlow->SetScale(0.25f, 0.5f);
+				m_pEyeGlow->SetBrightness(164, 0.1f);
+				m_pEyeGlow->m_nRenderFX = kRenderFxNone;
+			}
+
+			if (m_pLightGlow)
+			{
+				m_pLightGlow->SetColor(0, 255, 255);
+				m_pLightGlow->SetScale(0.25f, 0.5f);
+				m_pLightGlow->SetBrightness(164, 0.1f);
+				m_pLightGlow->m_nRenderFX = kRenderFxNone;
+			}
+
+			if (m_pLightGlow, m_bHackedByTraitors)
+			{
+				m_pLightGlow->SetColor(255, 136, 0);
+				m_pLightGlow->SetScale(0.25f, 0.5f);
+				m_pLightGlow->SetBrightness(164, 0.1f);
+				m_pLightGlow->m_nRenderFX = kRenderFxNone;
+			}
+		}
+		
+
+	case MANHACK_EYE_STATE_IDLE:
+#ifdef EZ2
+		if (!m_bHackedByAlyx)
+#endif
+		{
+			if (m_pEyeGlow)
+			{
+				//Toggle our state
+				m_pEyeGlow->SetColor(0, 255, 255);
+				m_pEyeGlow->SetScale(0.25f, 0.5f);
+				m_pEyeGlow->SetBrightness(164, 0.1f);
+				m_pEyeGlow->m_nRenderFX = kRenderFxNone;
+
+				if (m_pEyeGlow, m_bHackedByTraitors)
+				{
+					m_pEyeGlow->SetColor(255, 204, 0);
+					m_pEyeGlow->SetScale(0.25f, 0.5f);
+					m_pEyeGlow->SetBrightness(164, 0.1f);
+					m_pEyeGlow->m_nRenderFX = kRenderFxNone;
+				}
+			}
+
+			if (m_pLightGlow)
+			{
+				m_pLightGlow->SetColor(0, 255, 255);
+				m_pLightGlow->SetScale(0.25f, 0.5f);
+				m_pLightGlow->SetBrightness(164, 0.1f);
+				m_pLightGlow->m_nRenderFX = kRenderFxNone;
+
+				if (m_pLightGlow, m_bHackedByTraitors)
+				{
+					m_pLightGlow->SetColor(255, 204, 0);
+					m_pLightGlow->SetScale(0.25f, 0.5f);
+					m_pLightGlow->SetBrightness(164, 0.1f);
+					m_pLightGlow->m_nRenderFX = kRenderFxNone;
+				}
+			}
+
+			break;
+		}
+#endif
 
 	default:
 		if (m_pEyeGlow)
 			m_pEyeGlow->m_nRenderFX = kRenderFxNone;
 		break;
-	}
+		}
 }
 
 
