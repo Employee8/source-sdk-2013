@@ -49,9 +49,9 @@ private:
 	CPanelAnimationVarAliasType( float, m_flIconInsetY, "IconInsetY", "8", "proportional_float" );
 	CPanelAnimationVarAliasType( float, m_flIconGap, "IconGap", "20", "proportional_float" );
 
-	CPanelAnimationVar( Color, m_SquadIconColor, "SquadIconColor", "255 220 0 160" );
-	CPanelAnimationVar( Color, m_LastMemberColor, "LastMemberColor", "255 220 0 0" );
-	CPanelAnimationVar( Color, m_SquadTextColor, "SquadTextColor", "255 220 0 160" );
+	CPanelAnimationVar( Color, m_SquadIconColor, "SquadIconColor", "255 255 255 160" );
+	CPanelAnimationVar( Color, m_LastMemberColor, "LastMemberColor", "255 255 255 0" );
+	CPanelAnimationVar( Color, m_SquadTextColor, "SquadTextColor", "255 255 255 160" );
 	
 	int m_iSquadMembers;
 	int m_iSquadMedics;
