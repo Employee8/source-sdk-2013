@@ -296,7 +296,7 @@ void CNPC_Bec::DeathSound( const CTakeDamageInfo &info )
 	// Sentences don't play on dead NPCs
 	SentenceStop();
 
-	EmitSound( "bec.die" );
+	SpeakIfAllowed( TLK_DEATH );
 
 }
 
