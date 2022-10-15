@@ -127,18 +127,6 @@ $Project "Client (Episodic)"
 			$File	"$SRCDIR\game\shared\hl2\survival_gamerules.cpp"
 			$File	"hl2\vgui_rootpanel_hl2.cpp"
 			$File	"episodic\c_npc_puppet.cpp"
-
-			$Folder	"CS:S Weapons"
-			{
-				//$File	"$SRCDIR\game\shared\hl2\weapon_css_base_activitylists.cpp"
-				$File	"$SRCDIR\game\shared\hl2\weapon_css_base.cpp"
-				$File	"$SRCDIR\game\shared\hl2\weapon_css_base.h"
-				$File	"$SRCDIR\game\shared\hl2\weapon_css_pistols.cpp"
-				$File	"$SRCDIR\game\shared\hl2\weapon_css_rifles.cpp"
-				$File	"$SRCDIR\game\shared\hl2\weapon_css_shotguns.cpp"
-				$File	"$SRCDIR\game\shared\hl2\weapon_css_smgs.cpp"
-				$File	"$SRCDIR\game\shared\hl2\weapon_css_misc.cpp"
-			}
 		}
 	}
 	

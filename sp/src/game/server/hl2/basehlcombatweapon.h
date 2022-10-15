@@ -38,8 +38,8 @@ public:
 
 #ifdef CSS_WEAPONS_IN_HL2
 	virtual float GetDamageMultiplier() const { return 1.0f; }
-	virtual bool IsSilenced() const { return false; }
 #endif
+
 
 	int				WeaponSoundRealtime( WeaponSound_t shoot_type );
 
