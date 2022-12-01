@@ -674,7 +674,7 @@ void CNPC_PlayerCompanion::BuildScheduleTestBits()
 #endif
 
 	if ( ( ConditionInterruptsCurSchedule( COND_GIVE_WAY ) || 
-		   IsCurSchedule(SCHED_HIDE_AND_RELOAD ) || 
+		  // IsCurSchedule(SCHED_HIDE_AND_RELOAD ) || 
 		   IsCurSchedule(SCHED_RELOAD ) || 
 		   IsCurSchedule(SCHED_STANDOFF ) || 
 		   IsCurSchedule(SCHED_TAKE_COVER_FROM_ENEMY ) || 
@@ -1146,30 +1146,30 @@ bool CNPC_PlayerCompanion::IsValidReasonableFacing( const Vector &vecSightDir, f
 //-----------------------------------------------------------------------------
 int CNPC_PlayerCompanion::TranslateSchedule( int scheduleType ) 
 {
-	switch( scheduleType )
+	switch (scheduleType)
 	{
 	case SCHED_IDLE_STAND:
 	case SCHED_ALERT_STAND:
-		if( GetActiveWeapon() )
+		if (GetActiveWeapon())
 		{
 			// Everyone with less than half a clip takes turns reloading when not fighting.
-			CBaseCombatWeapon *pWeapon = GetActiveWeapon();
+			CBaseCombatWeapon* pWeapon = GetActiveWeapon();
 
-			if( CanReload() && pWeapon->UsesClipsForAmmo1() && pWeapon->Clip1() < ( pWeapon->GetMaxClip1() * .5 ) && OccupyStrategySlot( SQUAD_SLOT_EXCLUSIVE_RELOAD ) )
+			if (CanReload() && pWeapon->UsesClipsForAmmo1() && pWeapon->Clip1() < (pWeapon->GetMaxClip1() * .5) && OccupyStrategySlot(SQUAD_SLOT_EXCLUSIVE_RELOAD))
 			{
-				if ( AI_IsSinglePlayer() )
+				if (AI_IsSinglePlayer())
 				{
-					CBasePlayer *pPlayer = UTIL_GetLocalPlayer();
+					CBasePlayer* pPlayer = UTIL_GetLocalPlayer();
 					pWeapon = pPlayer->GetActiveWeapon();
-					if( pWeapon && pWeapon->UsesClipsForAmmo1() && 
-						pWeapon->Clip1() < ( pWeapon->GetMaxClip1() * .75 ) &&
-						pPlayer->GetAmmoCount( pWeapon->GetPrimaryAmmoType() ) )
+					if (pWeapon && pWeapon->UsesClipsForAmmo1() &&
+						pWeapon->Clip1() < (pWeapon->GetMaxClip1() * .75) &&
+						pPlayer->GetAmmoCount(pWeapon->GetPrimaryAmmoType()))
 					{
 #ifdef MAPBASE
 						// Less annoying
-						if ( !pWeapon->m_bInReload && (gpGlobals->curtime - GetLastEnemyTime()) > 5.0f )
+						if (!pWeapon->m_bInReload && (gpGlobals->curtime - GetLastEnemyTime()) > 5.0f)
 #endif
-						SpeakIfAllowed( TLK_PLRELOAD );
+							SpeakIfAllowed(TLK_PLRELOAD);
 					}
 				}
 				return SCHED_RELOAD;
@@ -1181,27 +1181,27 @@ int CNPC_PlayerCompanion::TranslateSchedule( int scheduleType )
 		return SCHED_PC_COWER;
 
 	case SCHED_TAKE_COVER_FROM_BEST_SOUND:
+	{
+		CSound* pSound = GetBestSound(SOUND_DANGER);
+
+		if (pSound && pSound->m_hOwner)
 		{
-			CSound *pSound = GetBestSound(SOUND_DANGER);
-
-			if( pSound && pSound->m_hOwner )
+			if (pSound->m_hOwner->IsNPC() && FClassnameIs(pSound->m_hOwner, "npc_zombine"))
 			{
-				if( pSound->m_hOwner->IsNPC() && FClassnameIs( pSound->m_hOwner, "npc_zombine" ) )
-				{
-					// Run fully away from a Zombine with a grenade.
-					return SCHED_PC_TAKE_COVER_FROM_BEST_SOUND;
-				}
+				// Run fully away from a Zombine with a grenade.
+				return SCHED_PC_TAKE_COVER_FROM_BEST_SOUND;
 			}
-
-			return SCHED_PC_MOVE_TOWARDS_COVER_FROM_BEST_SOUND;
 		}
+
+		return SCHED_PC_MOVE_TOWARDS_COVER_FROM_BEST_SOUND;
+	}
 
 	case SCHED_FLEE_FROM_BEST_SOUND:
 		return SCHED_PC_FLEE_FROM_BEST_SOUND;
 
 	case SCHED_ESTABLISH_LINE_OF_FIRE:
 #ifdef MAPBASE
-		if ( CanAltFireEnemy(false) && OccupyStrategySlot(SQUAD_SLOT_SPECIAL_ATTACK) )
+		if (CanAltFireEnemy(false) && OccupyStrategySlot(SQUAD_SLOT_SPECIAL_ATTACK))
 		{
 			// If this companion has the balls to alt-fire the enemy's last known position,
 			// do so!
@@ -1209,17 +1209,17 @@ int CNPC_PlayerCompanion::TranslateSchedule( int scheduleType )
 		}
 #endif
 	case SCHED_MOVE_TO_WEAPON_RANGE:
-		if ( IsMortar( GetEnemy() ) )
+		if (IsMortar(GetEnemy()))
 			return SCHED_TAKE_COVER_FROM_ENEMY;
 		break;
 
 	case SCHED_CHASE_ENEMY:
-		if ( IsMortar( GetEnemy() ) )
+		if (IsMortar(GetEnemy()))
 			return SCHED_TAKE_COVER_FROM_ENEMY;
 #ifdef MAPBASE
-		if ( GetEnemy() && EntIsClass( GetEnemy(), gm_isz_class_Gunship ) )
+		if (GetEnemy() && EntIsClass(GetEnemy(), gm_isz_class_Gunship))
 #else
-		if ( GetEnemy() && FClassnameIs( GetEnemy(), "npc_combinegunship" ) )
+		if (GetEnemy() && FClassnameIs(GetEnemy(), "npc_combinegunship"))
 #endif
 			return SCHED_ESTABLISH_LINE_OF_FIRE;
 		break;
@@ -1227,22 +1227,22 @@ int CNPC_PlayerCompanion::TranslateSchedule( int scheduleType )
 	case SCHED_ESTABLISH_LINE_OF_FIRE_FALLBACK:
 		// If we're fighting a gunship, try again
 #ifdef MAPBASE
-		if ( GetEnemy() && EntIsClass( GetEnemy(), gm_isz_class_Gunship ) )
+		if (GetEnemy() && EntIsClass(GetEnemy(), gm_isz_class_Gunship))
 #else
-		if ( GetEnemy() && FClassnameIs( GetEnemy(), "npc_combinegunship" ) )
+		if (GetEnemy() && FClassnameIs(GetEnemy(), "npc_combinegunship"))
 #endif
 			return SCHED_ESTABLISH_LINE_OF_FIRE;
 		break;
 
 	case SCHED_RANGE_ATTACK1:
-		if ( IsMortar( GetEnemy() ) )
+		if (IsMortar(GetEnemy()))
 			return SCHED_TAKE_COVER_FROM_ENEMY;
-			
-		if ( GetShotRegulator()->IsInRestInterval() )
+
+		if (GetShotRegulator()->IsInRestInterval())
 			return SCHED_STANDOFF;
 
 #ifdef MAPBASE
-		if (CanAltFireEnemy( true ) && OccupyStrategySlot( SQUAD_SLOT_SPECIAL_ATTACK ))
+		if (CanAltFireEnemy(true) && OccupyStrategySlot(SQUAD_SLOT_SPECIAL_ATTACK))
 		{
 			// Since I'm holding this squadslot, no one else can try right now. If I die before the shot 
 			// goes off, I won't have affected anyone else's ability to use this attack at their nearest
@@ -1250,12 +1250,12 @@ int CNPC_PlayerCompanion::TranslateSchedule( int scheduleType )
 			return SCHED_PC_AR2_ALTFIRE;
 		}
 
-		if ( !OccupyStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) )
+		if (!OccupyStrategySlotRange(SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2))
 		{
 			// Throw a grenade if not allowed to engage with weapon.
-			if ( CanGrenadeEnemy() )
+			if (CanGrenadeEnemy())
 			{
-				if ( OccupyStrategySlot( SQUAD_SLOT_SPECIAL_ATTACK ) )
+				if (OccupyStrategySlot(SQUAD_SLOT_SPECIAL_ATTACK))
 				{
 					return SCHED_PC_RANGE_ATTACK2;
 				}
@@ -1264,71 +1264,110 @@ int CNPC_PlayerCompanion::TranslateSchedule( int scheduleType )
 			return SCHED_STANDOFF;
 		}
 #else
-		if( !OccupyStrategySlotRange( SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2 ) )
+		if (!OccupyStrategySlotRange(SQUAD_SLOT_ATTACK1, SQUAD_SLOT_ATTACK2))
 			return SCHED_STANDOFF;
 #endif
 		break;
 
 #if COMPANION_MELEE_ATTACK
-	//case SCHED_BACK_AWAY_FROM_ENEMY:
-	//	if (HasCondition(COND_CAN_MELEE_ATTACK1))
-	//		return SCHED_MELEE_ATTACK1;
-	//	break;
+		//case SCHED_BACK_AWAY_FROM_ENEMY:
+		//	if (HasCondition(COND_CAN_MELEE_ATTACK1))
+		//		return SCHED_MELEE_ATTACK1;
+		//	break;
 
 	case SCHED_MELEE_ATTACK1:
 #ifdef EZ
-		if( !HasCondition( COND_NO_PRIMARY_AMMO ) )
+		//if (!HasCondition(COND_NO_PRIMARY_AMMO))
 #endif
-		{
-			return SCHED_PC_MELEE_AND_MOVE_AWAY;
-		}
+		//{
+		//	return SCHED_PC_MELEE_AND_MOVE_AWAY;
+		//}
 #endif
 
 	case SCHED_FAIL_TAKE_COVER:
-		if ( IsEnemyTurret() )
+		if (IsEnemyTurret())
 		{
 			return SCHED_PC_FAIL_TAKE_COVER_TURRET;
 		}
+
+		if (HasCondition(COND_HEAVY_DAMAGE) && HasCondition(COND_CAN_MELEE_ATTACK1))
+		{
+			return SCHED_PC_MELEE_AND_MOVE_AWAY;
+		}
 		break;
 	case SCHED_RUN_FROM_ENEMY_FALLBACK:
-		{
+	{
 #if COMPANION_MELEE_ATTACK
-			if (HasCondition(COND_CAN_MELEE_ATTACK1) && !HasCondition(COND_HEAVY_DAMAGE))
-			{
-				return SCHED_MELEE_ATTACK1;
-			}
-#endif
-			if ( HasCondition( COND_CAN_RANGE_ATTACK1 ) )
-			{
-				return SCHED_RANGE_ATTACK1;
-			}
-			break;
+		if (HasCondition(COND_CAN_MELEE_ATTACK1) && !HasCondition(COND_HEAVY_DAMAGE))
+		{
+			return SCHED_MELEE_ATTACK1;
 		}
+#endif
+		if (HasCondition(COND_CAN_RANGE_ATTACK1))
+		{
+			return SCHED_RANGE_ATTACK1;
+		}
+		break;
+	}
 
 #ifdef MAPBASE
 	case SCHED_TAKE_COVER_FROM_ENEMY:
+	{
+		if (m_pSquad)
 		{
-			if ( m_pSquad )
+			// Have to explicitly check innate range attack condition as may have weapon with range attack 2
+			if (HasCondition(COND_CAN_RANGE_ATTACK2) &&
+				OccupyStrategySlot(SQUAD_SLOT_SPECIAL_ATTACK))
 			{
-				// Have to explicitly check innate range attack condition as may have weapon with range attack 2
-				if ( HasCondition(COND_CAN_RANGE_ATTACK2)		&&
-					OccupyStrategySlot( SQUAD_SLOT_SPECIAL_ATTACK ) )
-				{
-					SpeakIfAllowed("TLK_THROWGRENADE");
-					return SCHED_PC_RANGE_ATTACK2;
-				}
-			}
-		}
-		break;
-	case SCHED_HIDE_AND_RELOAD:
-		{
-			if( CanGrenadeEnemy() && OccupyStrategySlot( SQUAD_SLOT_SPECIAL_ATTACK ) && random->RandomInt( 0, 100 ) < 20 )
-			{
-				// If I COULD throw a grenade and I need to reload, 20% chance I'll throw a grenade before I hide to reload.
+				SpeakIfAllowed("TLK_THROWGRENADE");
 				return SCHED_PC_RANGE_ATTACK2;
 			}
 		}
-		break;
+	}
+	break;
+	case SCHED_HIDE_AND_RELOAD:
+	{
+		if (CanGrenadeEnemy() && OccupyStrategySlot(SQUAD_SLOT_SPECIAL_ATTACK) && random->RandomInt(0, 100) < 20)
+		{
+			// If I COULD throw a grenade and I need to reload, 20% chance I'll throw a grenade before I hide to reload.
+			return SCHED_PC_RANGE_ATTACK2;
+		}
+
+		if (HasCondition(COND_CAN_MELEE_ATTACK1))
+		{
+			return SCHED_MELEE_ATTACK1;
+		}
+
+		if (HasCondition(COND_LOW_PRIMARY_AMMO) && HasCondition(COND_ENEMY_UNREACHABLE))
+		{
+			return SCHED_HIDE_AND_RELOAD;
+		}
+
+		if (HasCondition(COND_NO_PRIMARY_AMMO) && HasCondition(COND_ENEMY_UNREACHABLE))
+		{
+			return SCHED_HIDE_AND_RELOAD;
+		}
+
+		if (HasCondition(COND_CAN_MELEE_ATTACK1) && HasCondition(COND_NO_PRIMARY_AMMO))
+		{
+			return SCHED_MELEE_ATTACK1;
+		}
+
+		if (HasCondition(COND_CAN_MELEE_ATTACK1) && HasCondition(COND_LOW_PRIMARY_AMMO))
+		{
+			return SCHED_HIDE_AND_RELOAD;
+		}
+	}
+	break;
+
+	case SCHED_RELOAD:
+	{
+		if (HasCondition(COND_CAN_MELEE_ATTACK1))
+		{
+			return SCHED_MELEE_ATTACK1;
+		}
+	}
+	break;
 #endif
 	}
 
