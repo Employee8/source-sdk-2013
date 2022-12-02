@@ -35,7 +35,11 @@
 #include "tier0/memdbgon.h"
 
 #define BEC_MODEL "models/police.mdl"
-#define BEC_SKIN 3
+
+// Bec actually has multiple skins
+// definin this since it caused an issue with death sounds
+#define BEC_EYE1 3
+#define BEC_EYE2 2
 
 // Bec's ConVar stuff
 ConVar	sk_bec_health( "sk_bec_health","0");
@@ -216,7 +220,7 @@ void CNPC_Bec::Spawn(void)
 
 	m_iHealth = 80;
 
-	m_nSkin = (BEC_SKIN);
+	m_nSkin = (BEC_EYE1);
 
 	BaseClass::Spawn();
 
@@ -291,12 +295,26 @@ void CNPC_Bec::HandleAnimEvent( animevent_t *pEvent )
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-void CNPC_Bec::DeathSound( const CTakeDamageInfo &info )
+void CNPC_Bec::DeathSound(const CTakeDamageInfo& info)
 {
 	// Sentences don't play on dead NPCs
 	SentenceStop();
 
-	Speak( TLK_DEATH );
+	// Senteces thing kinda isn't necessary but oh well
+	// we doin it on Bec due to response system wackiness with death sounds
+
+	// using a switch for bec death sounds
+	switch (m_nSkin) {
+		case 2:
+			EmitSound("bec.die");
+			break;
+		case 3:
+			EmitSound("bec.die");
+			break;
+		case 4:
+			EmitSound("red.die");
+			break;
+	}
 
 }
 
