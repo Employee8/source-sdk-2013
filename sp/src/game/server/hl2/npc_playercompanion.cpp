@@ -154,6 +154,12 @@ BEGIN_DATADESC( CNPC_PlayerCompanion )
 	DEFINE_INPUT( m_iGrenadeCapabilities, FIELD_INTEGER, "SetGrenadeCapabilities" ),
 #endif
 
+// Special thanks to blixibon for being goated 
+// (Epic companion melee bug fix)
+#ifdef COMPANION_MELEE_ATTACK
+	DEFINE_FIELD(m_nMeleeDamage, FIELD_INTEGER),
+#endif
+
 END_DATADESC()
 
 //-----------------------------------------------------------------------------
