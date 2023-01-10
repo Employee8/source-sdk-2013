@@ -27,7 +27,10 @@ public:
 	DECLARE_SERVERCLASS();
 
 	#define MIN_SPREAD_COMPONENT 0.03490 // Was 0.13053
-	#define MAX_SPREAD_COMPONENT 0.34202 // Was 0.25881
+										 // Default is: 0.03490
+
+	#define MAX_SPREAD_COMPONENT 0.25881 // Was 0.25881
+										 // Default is: 0.34202
 
 	void	ItemPostFrame( void );
 	void	Precache( void );
@@ -36,8 +39,8 @@ public:
 	void	PrimaryAttack(void); // Breadman
 #endif	
 	void	SecondaryAttack( void );
-	void	BurstAttack(int burstSize, float cycleRate); // Mark:Thing i believe is from 1upD's weapon_smg2.cpp
-													     // it for AR2 Burst Firce Code
+	void	BurstAttack(int burstSize, float cycleRate); // Mark: Thing i believe is from 1upD's weapon_smg2.cpp
+													     // it for AR2 Burst Fire Code
 	void	DelayedAttack( void );
 
 	const char *GetTracerType( void ) { return "AR2Tracer"; }
