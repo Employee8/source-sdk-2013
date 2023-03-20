@@ -324,33 +324,44 @@ void CNPC_Combine::ClearFollowTarget()
 //-----------------------------------------------------------------------------
 // BREADMAN - lets you 'use' the soldiers - OMG IT WORKS
 //-----------------------------------------------------------------------------
+// Employee8: We don't need this in EZU, therefor it's commented out.
 //-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
+//void CNPC_Combine::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE useType, float value)
+//{
+//	m_OnPlayerUse.FireOutput(pActivator, pCaller);
+//
+//	if (pActivator == UTIL_GetLocalPlayer() && IsCommandable())
+//	{
+//		bool isInPlayerSquad = IsInPlayerSquad();
+//
+//		// I'm the target! Toggle follow!
+//		if (isInPlayerSquad)
+//		{
+//			StopFollowSound();
+//			RemoveFromPlayerSquad();
+//		}
+//		else
+//		{
+//			// Look at the player when asked to follow. (needs head-turning model)
+//			// -Blixibon
+//			AddLookTarget(pActivator, 0.75, 3.0);
+//
+//			FollowSound();
+//			AddToPlayerSquad();
+//		}
+//	}
+//}
+
+// Employee8: HOWEVER, we still want the combine soldiers to acknowledge the player
+
 void CNPC_Combine::Use(CBaseEntity* pActivator, CBaseEntity* pCaller, USE_TYPE useType, float value)
 {
 	m_OnPlayerUse.FireOutput(pActivator, pCaller);
-
-	if (pActivator == UTIL_GetLocalPlayer() && IsCommandable())
-	{
-		bool isInPlayerSquad = IsInPlayerSquad();
-
-		// I'm the target! Toggle follow!
-		if (isInPlayerSquad)
-		{
-			StopFollowSound();
-			RemoveFromPlayerSquad();
-		}
-		else
-		{
-			// Look at the player when asked to follow. (needs head-turning model)
-			// -Blixibon
-			AddLookTarget(pActivator, 0.75, 3.0);
-
-			FollowSound();
-			AddToPlayerSquad();
-		}
-	}
+	// Look at the player when asked to follow. (needs head-turning model)
+	// -Blixibon
+	AddLookTarget(pActivator, 0.75, 3.0);
 }
+
 
 //-----------------------------------------------------------------------------
 // 1upD - Determine if this NPC can be commanded
