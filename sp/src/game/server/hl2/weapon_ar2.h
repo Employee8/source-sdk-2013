@@ -32,6 +32,10 @@ public:
 	#define MAX_SPREAD_COMPONENT 0.03490 // Was 0.25881
 										 // Default is: 0.34202
 
+	#define MIN_NPC_SPREAD_COMPONENT 0.13053 // Employee8: We don't want NPCs to be as accurate as the player!
+
+	#define MAX_NPC_SPREAD_COMPONENT 0.34202
+
 	void	ItemPostFrame( void );
 	void	Precache( void );
 
